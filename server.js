@@ -125,7 +125,7 @@ async function initDatabase() {
         criado_em TIMESTAMP DEFAULT NOW()
       );
 
-      -- Gastos da máquina (NOVA TABELA)
+      -- Gastos da máquina
       CREATE TABLE IF NOT EXISTS gastos (
         id SERIAL PRIMARY KEY,
         maquina_id INTEGER REFERENCES maquinas(id),
@@ -137,7 +137,7 @@ async function initDatabase() {
         created_at TIMESTAMP DEFAULT NOW()
       );
 
-      -- Pagamentos da máquina (NOVA TABELA)
+      -- Pagamentos da máquina
       CREATE TABLE IF NOT EXISTS pagamentos (
         id SERIAL PRIMARY KEY,
         maquina_id INTEGER REFERENCES maquinas(id),
@@ -148,29 +148,32 @@ async function initDatabase() {
       );
     `);
 
-    // Inserir categorias padrão (GARANTIDO!)
+    console.log('✅ Tabelas criadas!');
+
+    // CORREÇÃO: Inserir categorias uma por uma
     const categorias = [
-      ['Minicarregadeira', '🏗️'],
-      ['Miniescavadeira', '⛏️'],
-      ['Mini Retro', '🚜'],
-      ['Retroescavadeira', '🏗️'],
-      ['Manipulador', '🦾'],
-      ['Caminhão', '🚛'],
-      ['Outros', '🔧']
+      { nome: 'Minicarregadeira', icone: '🏗️' },
+      { nome: 'Miniescavadeira', icone: '⛏️' },
+      { nome: 'Mini Retro', icone: '🚜' },
+      { nome: 'Retroescavadeira', icone: '🏗️' },
+      { nome: 'Manipulador', icone: '🦾' },
+      { nome: 'Caminhão', icone: '🚛' },
+      { nome: 'Outros', icone: '🔧' }
     ];
 
-    for (const [nome, icone] of categorias) {
+    for (const cat of categorias) {
       await client.query(`
         INSERT INTO categorias (nome, icone) 
-        SELECT $1, $2 
-        WHERE NOT EXISTS (SELECT 1 FROM categorias WHERE nome = $1)
-      `, [nome, icone]);
+        VALUES ($1, $2) 
+        ON CONFLICT (nome) DO NOTHING
+      `, [cat.nome, cat.icone]);
     }
 
     // Verificar se inseriu
     const cats = await client.query('SELECT COUNT(*) FROM categorias');
-    console.log(`✅ ${cats.rows[0].count} categorias no banco`);
+    console.log(`✅ ${cats.rows[0].count} categorias inseridas`);
     console.log('✅ Banco de dados inicializado com sucesso!');
+    
   } catch (error) {
     console.error('❌ Erro ao inicializar banco:', error.message);
     throw error;
