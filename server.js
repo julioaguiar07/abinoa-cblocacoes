@@ -2,15 +2,19 @@ const express = require('express');
 const { Pool } = require('pg');
 const cors = require('cors');
 const path = require('path');
-require('dotenv').config();
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Configuração do PostgreSQL
+// Configuração do PostgreSQL com fallback e retry
 const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-  ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false
+  connectionString: process.env.DATABASE_URL || process.env.DATABASE_PUBLIC_URL,
+  ssl: {
+    rejectUnauthorized: false
+  },
+  max: 20,
+  idleTimeoutMillis: 30000,
+  connectionTimeoutMillis: 10000,
 });
 
 // Middleware
@@ -18,10 +22,17 @@ app.use(cors());
 app.use(express.json());
 app.use(express.static('public'));
 
+// Health check
+app.get('/health', (req, res) => {
+  res.json({ status: 'ok', timestamp: new Date().toISOString() });
+});
+
 // ===== INICIALIZAÇÃO DO BANCO DE DADOS =====
 async function initDatabase() {
   const client = await pool.connect();
   try {
+    console.log('📦 Verificando banco de dados...');
+    
     await client.query(`
       -- Tabela de Categorias
       CREATE TABLE IF NOT EXISTS categorias (
@@ -95,19 +106,40 @@ async function initDatabase() {
         criado_em TIMESTAMP DEFAULT NOW()
       );
 
-      -- Inserir categorias padrão
-      INSERT INTO categorias (nome, icone) VALUES 
-        ('Minicarregadeira', '🏗️'),
-        ('Miniescavadeira', '⛏️'),
-        ('Mini Retro', '🚜'),
-        ('Retroescavadeira', '🏗️'),
-        ('Manipulador', '🦾'),
-        ('Caminhão', '🚛')
-      ON CONFLICT (nome) DO NOTHING;
+      -- Inserir categorias padrão se não existirem
+      INSERT INTO categorias (nome, icone) 
+      SELECT 'Minicarregadeira', '🏗️'
+      WHERE NOT EXISTS (SELECT 1 FROM categorias WHERE nome = 'Minicarregadeira');
+      
+      INSERT INTO categorias (nome, icone) 
+      SELECT 'Miniescavadeira', '⛏️'
+      WHERE NOT EXISTS (SELECT 1 FROM categorias WHERE nome = 'Miniescavadeira');
+      
+      INSERT INTO categorias (nome, icone) 
+      SELECT 'Mini Retro', '🚜'
+      WHERE NOT EXISTS (SELECT 1 FROM categorias WHERE nome = 'Mini Retro');
+      
+      INSERT INTO categorias (nome, icone) 
+      SELECT 'Retroescavadeira', '🏗️'
+      WHERE NOT EXISTS (SELECT 1 FROM categorias WHERE nome = 'Retroescavadeira');
+      
+      INSERT INTO categorias (nome, icone) 
+      SELECT 'Manipulador', '🦾'
+      WHERE NOT EXISTS (SELECT 1 FROM categorias WHERE nome = 'Manipulador');
+      
+      INSERT INTO categorias (nome, icone) 
+      SELECT 'Caminhão', '🚛'
+      WHERE NOT EXISTS (SELECT 1 FROM categorias WHERE nome = 'Caminhão');
+
+      INSERT INTO categorias (nome, icone) 
+      SELECT 'Outros', '🔧'
+      WHERE NOT EXISTS (SELECT 1 FROM categorias WHERE nome = 'Outros');
+      
     `);
     console.log('✅ Banco de dados inicializado com sucesso');
   } catch (error) {
-    console.error('❌ Erro ao inicializar banco:', error);
+    console.error('❌ Erro ao inicializar banco:', error.message);
+    throw error;
   } finally {
     client.release();
   }
@@ -120,11 +152,11 @@ app.get('/api/dashboard', async (req, res) => {
   try {
     const stats = await pool.query(`
       SELECT 
-        COUNT(*) as total_maquinas,
-        COUNT(CASE WHEN status = 'locado' THEN 1 END) as locadas,
-        COUNT(CASE WHEN status = 'disponivel' THEN 1 END) as disponiveis,
-        COUNT(CASE WHEN status = 'manutencao' THEN 1 END) as em_manutencao,
-        COUNT(CASE WHEN status = 'inativo' THEN 1 END) as inativas
+        COUNT(*)::integer as total_maquinas,
+        COUNT(CASE WHEN status = 'locado' THEN 1 END)::integer as locadas,
+        COUNT(CASE WHEN status = 'disponivel' THEN 1 END)::integer as disponiveis,
+        COUNT(CASE WHEN status = 'manutencao' THEN 1 END)::integer as em_manutencao,
+        COUNT(CASE WHEN status = 'inativo' THEN 1 END)::integer as inativas
       FROM maquinas
     `);
 
@@ -133,11 +165,11 @@ app.get('/api/dashboard', async (req, res) => {
         c.id,
         c.nome,
         c.icone,
-        COUNT(m.id) as total,
-        COUNT(CASE WHEN m.status = 'locado' THEN 1 END) as locadas,
-        COUNT(CASE WHEN m.status = 'disponivel' THEN 1 END) as disponiveis,
-        COUNT(CASE WHEN m.status = 'manutencao' THEN 1 END) as manutencao,
-        COALESCE(SUM(m.valor_locacao) FILTER (WHERE m.status = 'locado'), 0) as receita_ativa
+        COUNT(m.id)::integer as total,
+        COUNT(CASE WHEN m.status = 'locado' THEN 1 END)::integer as locadas,
+        COUNT(CASE WHEN m.status = 'disponivel' THEN 1 END)::integer as disponiveis,
+        COUNT(CASE WHEN m.status = 'manutencao' THEN 1 END)::integer as manutencao,
+        COALESCE(SUM(m.valor_locacao) FILTER (WHERE m.status = 'locado'), 0)::float as receita_ativa
       FROM categorias c
       LEFT JOIN maquinas m ON c.id = m.categoria_id
       GROUP BY c.id, c.nome, c.icone
@@ -190,7 +222,7 @@ app.get('/api/dashboard', async (req, res) => {
 app.get('/api/categorias', async (req, res) => {
   try {
     const result = await pool.query(`
-      SELECT c.*, COUNT(m.id) as total_maquinas
+      SELECT c.*, COUNT(m.id)::integer as total_maquinas
       FROM categorias c
       LEFT JOIN maquinas m ON c.id = m.categoria_id
       GROUP BY c.id
@@ -198,11 +230,12 @@ app.get('/api/categorias', async (req, res) => {
     `);
     res.json(result.rows);
   } catch (error) {
+    console.error('Erro categorias:', error);
     res.status(500).json({ error: error.message });
   }
 });
 
-// Máquinas
+// Máquinas - GET (com filtros)
 app.get('/api/maquinas', async (req, res) => {
   try {
     const { categoria, status, search } = req.query;
@@ -213,7 +246,7 @@ app.get('/api/maquinas', async (req, res) => {
         c.icone as categoria_icone,
         o.nome as obra_nome,
         op.nome as operador_nome,
-        (SELECT COUNT(*) FROM problemas WHERE maquina_id = m.id AND status = 'pendente') as problemas_pendentes
+        (SELECT COUNT(*)::integer FROM problemas WHERE maquina_id = m.id AND status = 'pendente') as problemas_pendentes
       FROM maquinas m
       LEFT JOIN categorias c ON m.categoria_id = c.id
       LEFT JOIN alocacoes a ON m.id = a.maquina_id AND a.ativa = true
@@ -241,10 +274,12 @@ app.get('/api/maquinas', async (req, res) => {
     const result = await pool.query(query, params);
     res.json(result.rows);
   } catch (error) {
+    console.error('Erro máquinas:', error);
     res.status(500).json({ error: error.message });
   }
 });
 
+// Máquina específica
 app.get('/api/maquinas/:id', async (req, res) => {
   try {
     const { id } = req.params;
@@ -273,9 +308,8 @@ app.get('/api/maquinas/:id', async (req, res) => {
     `, [id]);
 
     const problemas = await pool.query(`
-      SELECT p.*, m.nome as maquina_nome
+      SELECT p.*
       FROM problemas p
-      JOIN maquinas m ON p.maquina_id = m.id
       WHERE p.maquina_id = $1
       ORDER BY p.criado_em DESC
     `, [id]);
@@ -286,10 +320,12 @@ app.get('/api/maquinas/:id', async (req, res) => {
       problemas: problemas.rows
     });
   } catch (error) {
+    console.error('Erro máquina específica:', error);
     res.status(500).json({ error: error.message });
   }
 });
 
+// Criar máquina
 app.post('/api/maquinas', async (req, res) => {
   try {
     const { 
@@ -307,16 +343,18 @@ app.post('/api/maquinas', async (req, res) => {
       RETURNING *
     `, [
       categoria_id, nome, numero_serie, placa, local_compra,
-      numero_nota, valor_locacao, combustivel, status_financeiro,
-      status, tem_operador, observacao
+      numero_nota, valor_locacao || null, combustivel, status_financeiro || 'ok',
+      status || 'disponivel', tem_operador || false, observacao
     ]);
 
     res.status(201).json(result.rows[0]);
   } catch (error) {
+    console.error('Erro criar máquina:', error);
     res.status(500).json({ error: error.message });
   }
 });
 
+// Atualizar máquina
 app.put('/api/maquinas/:id', async (req, res) => {
   try {
     const { id } = req.params;
@@ -336,12 +374,17 @@ app.put('/api/maquinas/:id', async (req, res) => {
       RETURNING *
     `, [
       categoria_id, nome, numero_serie, placa, local_compra,
-      numero_nota, valor_locacao, combustivel, status_financeiro,
-      status, tem_operador, observacao, id
+      numero_nota, valor_locacao || null, combustivel, status_financeiro || 'ok',
+      status || 'disponivel', tem_operador || false, observacao, id
     ]);
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Máquina não encontrada' });
+    }
 
     res.json(result.rows[0]);
   } catch (error) {
+    console.error('Erro atualizar máquina:', error);
     res.status(500).json({ error: error.message });
   }
 });
@@ -351,12 +394,13 @@ app.get('/api/obras', async (req, res) => {
   try {
     const result = await pool.query(`
       SELECT o.*, 
-        (SELECT COUNT(*) FROM alocacoes WHERE obra_id = o.id AND ativa = true) as maquinas_ativas
+        (SELECT COUNT(*)::integer FROM alocacoes WHERE obra_id = o.id AND ativa = true) as maquinas_ativas
       FROM obras o
       ORDER BY o.ativa DESC, o.nome
     `);
     res.json(result.rows);
   } catch (error) {
+    console.error('Erro obras:', error);
     res.status(500).json({ error: error.message });
   }
 });
@@ -370,6 +414,7 @@ app.post('/api/obras', async (req, res) => {
     );
     res.status(201).json(result.rows[0]);
   } catch (error) {
+    console.error('Erro criar obra:', error);
     res.status(500).json({ error: error.message });
   }
 });
@@ -384,6 +429,7 @@ app.put('/api/obras/:id', async (req, res) => {
     );
     res.json(result.rows[0]);
   } catch (error) {
+    console.error('Erro atualizar obra:', error);
     res.status(500).json({ error: error.message });
   }
 });
@@ -393,6 +439,7 @@ app.delete('/api/obras/:id', async (req, res) => {
     await pool.query('DELETE FROM obras WHERE id = $1', [req.params.id]);
     res.json({ success: true });
   } catch (error) {
+    console.error('Erro deletar obra:', error);
     res.status(500).json({ error: error.message });
   }
 });
@@ -402,13 +449,14 @@ app.get('/api/operadores', async (req, res) => {
   try {
     const result = await pool.query(`
       SELECT o.*, 
-        (SELECT COUNT(*) FROM alocacoes WHERE operador_id = o.id AND ativa = true) as alocacoes_ativas
+        (SELECT COUNT(*)::integer FROM alocacoes WHERE operador_id = o.id AND ativa = true) as alocacoes_ativas
       FROM operadores o
       WHERE o.ativo = true
       ORDER BY o.nome
     `);
     res.json(result.rows);
   } catch (error) {
+    console.error('Erro operadores:', error);
     res.status(500).json({ error: error.message });
   }
 });
@@ -422,6 +470,7 @@ app.post('/api/operadores', async (req, res) => {
     );
     res.status(201).json(result.rows[0]);
   } catch (error) {
+    console.error('Erro criar operador:', error);
     res.status(500).json({ error: error.message });
   }
 });
@@ -436,6 +485,7 @@ app.put('/api/operadores/:id', async (req, res) => {
     );
     res.json(result.rows[0]);
   } catch (error) {
+    console.error('Erro atualizar operador:', error);
     res.status(500).json({ error: error.message });
   }
 });
@@ -445,6 +495,7 @@ app.delete('/api/operadores/:id', async (req, res) => {
     await pool.query('UPDATE operadores SET ativo = false WHERE id = $1', [req.params.id]);
     res.json({ success: true });
   } catch (error) {
+    console.error('Erro deletar operador:', error);
     res.status(500).json({ error: error.message });
   }
 });
@@ -473,6 +524,7 @@ app.get('/api/alocacoes', async (req, res) => {
     `);
     res.json(result.rows);
   } catch (error) {
+    console.error('Erro alocações:', error);
     res.status(500).json({ error: error.message });
   }
 });
@@ -489,7 +541,7 @@ app.post('/api/alocacoes', async (req, res) => {
       INSERT INTO alocacoes (maquina_id, obra_id, operador_id, data_inicio, observacao)
       VALUES ($1, $2, $3, $4, $5)
       RETURNING *
-    `, [maquina_id, obra_id, operador_id, data_inicio, observacao]);
+    `, [maquina_id, obra_id, operador_id || null, data_inicio || new Date().toISOString().split('T')[0], observacao]);
 
     // Atualizar status da máquina
     await client.query(
@@ -501,6 +553,7 @@ app.post('/api/alocacoes', async (req, res) => {
     res.status(201).json(result.rows[0]);
   } catch (error) {
     await client.query('ROLLBACK');
+    console.error('Erro criar alocação:', error);
     res.status(500).json({ error: error.message });
   } finally {
     client.release();
@@ -534,6 +587,7 @@ app.put('/api/alocacoes/:id/encerrar', async (req, res) => {
     res.json(result.rows[0]);
   } catch (error) {
     await client.query('ROLLBACK');
+    console.error('Erro encerrar alocação:', error);
     res.status(500).json({ error: error.message });
   } finally {
     client.release();
@@ -574,6 +628,7 @@ app.get('/api/problemas', async (req, res) => {
     const result = await pool.query(query, params);
     res.json(result.rows);
   } catch (error) {
+    console.error('Erro problemas:', error);
     res.status(500).json({ error: error.message });
   }
 });
@@ -589,7 +644,7 @@ app.post('/api/problemas', async (req, res) => {
       INSERT INTO problemas (maquina_id, descricao, tipo, prioridade, reportado_por)
       VALUES ($1, $2, $3, $4, $5)
       RETURNING *
-    `, [maquina_id, descricao, tipo, prioridade, reportado_por]);
+    `, [maquina_id, descricao, tipo, prioridade || 'media', reportado_por]);
 
     // Se for prioridade crítica, colocar máquina em manutenção
     if (prioridade === 'critica') {
@@ -603,6 +658,7 @@ app.post('/api/problemas', async (req, res) => {
     res.status(201).json(result.rows[0]);
   } catch (error) {
     await client.query('ROLLBACK');
+    console.error('Erro criar problema:', error);
     res.status(500).json({ error: error.message });
   } finally {
     client.release();
@@ -624,26 +680,29 @@ app.put('/api/problemas/:id/resolver', async (req, res) => {
           resolvido_em = NOW()
       WHERE id = $2
       RETURNING *
-    `, [observacao_resolucao, id]);
+    `, [observacao_resolucao || '', id]);
 
-    // Verificar se ainda tem problemas pendentes nesta máquina
-    const pendentes = await client.query(
-      'SELECT COUNT(*) FROM problemas WHERE maquina_id = $1 AND status = $2',
-      [result.rows[0].maquina_id, 'pendente']
-    );
-
-    // Se não houver mais pendentes, voltar máquina para disponível
-    if (parseInt(pendentes.rows[0].count) === 0) {
-      await client.query(
-        "UPDATE maquinas SET status = 'disponivel', updated_at = NOW() WHERE id = $1 AND status = 'manutencao'",
-        [result.rows[0].maquina_id]
+    if (result.rows.length > 0) {
+      // Verificar se ainda tem problemas pendentes nesta máquina
+      const pendentes = await client.query(
+        'SELECT COUNT(*)::integer as count FROM problemas WHERE maquina_id = $1 AND status = $2',
+        [result.rows[0].maquina_id, 'pendente']
       );
+
+      // Se não houver mais pendentes e máquina em manutenção, voltar para disponível
+      if (pendentes.rows[0].count === 0) {
+        await client.query(
+          "UPDATE maquinas SET status = 'disponivel', updated_at = NOW() WHERE id = $1 AND status = 'manutencao'",
+          [result.rows[0].maquina_id]
+        );
+      }
     }
 
     await client.query('COMMIT');
     res.json(result.rows[0]);
   } catch (error) {
     await client.query('ROLLBACK');
+    console.error('Erro resolver problema:', error);
     res.status(500).json({ error: error.message });
   } finally {
     client.release();
@@ -655,19 +714,53 @@ app.delete('/api/problemas/:id', async (req, res) => {
     await pool.query('DELETE FROM problemas WHERE id = $1', [req.params.id]);
     res.json({ success: true });
   } catch (error) {
+    console.error('Erro deletar problema:', error);
     res.status(500).json({ error: error.message });
   }
 });
 
-// ===== INICIAR SERVIDOR =====
+// Página principal
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
+
+// ===== INICIAR SERVIDOR COM RETRY =====
 async function startServer() {
-  await initDatabase();
+  let retries = 5;
+  
+  while (retries > 0) {
+    try {
+      await initDatabase();
+      console.log('✅ Conexão com banco de dados estabelecida');
+      break;
+    } catch (error) {
+      console.error(`❌ Tentativa ${6 - retries}/5 falhou:`, error.message);
+      retries--;
+      
+      if (retries === 0) {
+        console.error('❌ Todas as tentativas de conexão falharam. Iniciando sem banco de dados...');
+        // Continua mesmo sem banco - o app vai funcionar, mas sem persistência
+      }
+      
+      // Espera 5 segundos antes de tentar novamente
+      await new Promise(resolve => setTimeout(resolve, 5000));
+    }
+  }
   
   app.listen(PORT, '0.0.0.0', () => {
     console.log(`🚀 Servidor rodando na porta ${PORT}`);
-    console.log(`📊 Dashboard: http://localhost:${PORT}`);
-    console.log(`🗄️  API: http://localhost:${PORT}/api`);
+    console.log(`📊 Acesse: http://localhost:${PORT}`);
+    console.log(`💚 Health check: http://localhost:${PORT}/health`);
   });
 }
+
+// Tratamento de erros global
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('Unhandled Rejection at:', promise, 'reason:', reason);
+});
+
+process.on('uncaughtException', (error) => {
+  console.error('Uncaught Exception:', error);
+});
 
 startServer();
