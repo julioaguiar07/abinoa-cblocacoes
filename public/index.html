@@ -1,0 +1,2272 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CB Locações — Sistema de Gestão</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0d0f14;
+    --surface: #14181f;
+    --surface2: #1c2230;
+    --surface3: #222b3a;
+    --border: rgba(255,255,255,0.06);
+    --border-hover: rgba(255,255,255,0.12);
+    --text: #e8eaf0;
+    --text-muted: #6b7a99;
+    --text-dim: #3d4a63;
+    --accent: #f5a623;
+    --accent-dim: rgba(245,166,35,0.12);
+    --accent-hover: #f7b84a;
+    --green: #27c97e;
+    --green-dim: rgba(39,201,126,0.12);
+    --red: #ef4444;
+    --red-dim: rgba(239,68,68,0.12);
+    --blue: #3b82f6;
+    --blue-dim: rgba(59,130,246,0.12);
+    --orange: #f97316;
+    --orange-dim: rgba(249,115,22,0.12);
+    --purple: #a855f7;
+    --purple-dim: rgba(168,85,247,0.12);
+    --radius: 12px;
+    --radius-sm: 8px;
+    --sidebar-w: 240px;
+    --font-display: 'Syne', sans-serif;
+    --font-body: 'DM Sans', sans-serif;
+    --transition: 0.18s ease;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: var(--font-body);
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    display: flex;
+    overflow: hidden;
+    font-size: 14px;
+  }
+
+  /* ===== SIDEBAR ===== */
+  .sidebar {
+    width: var(--sidebar-w);
+    min-height: 100vh;
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    position: fixed;
+    left: 0; top: 0; bottom: 0;
+    z-index: 100;
+    transition: transform var(--transition);
+  }
+
+  .sidebar-logo {
+    padding: 24px 20px 20px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .logo-mark {
+    font-family: var(--font-display);
+    font-size: 20px;
+    font-weight: 800;
+    color: var(--accent);
+    letter-spacing: -0.5px;
+  }
+
+  .logo-sub {
+    font-size: 10px;
+    font-weight: 500;
+    color: var(--text-muted);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-top: 2px;
+  }
+
+  .sidebar-nav {
+    flex: 1;
+    padding: 12px 10px;
+    overflow-y: auto;
+  }
+
+  .nav-section {
+    margin-bottom: 4px;
+  }
+
+  .nav-label {
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--text-dim);
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    padding: 8px 10px 4px;
+  }
+
+  .nav-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 9px 12px;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    color: var(--text-muted);
+    font-size: 13.5px;
+    font-weight: 400;
+    transition: all var(--transition);
+    text-decoration: none;
+    position: relative;
+  }
+
+  .nav-item:hover {
+    background: var(--surface2);
+    color: var(--text);
+  }
+
+  .nav-item.active {
+    background: var(--accent-dim);
+    color: var(--accent);
+    font-weight: 500;
+  }
+
+  .nav-item .icon {
+    width: 18px;
+    text-align: center;
+    font-size: 14px;
+    flex-shrink: 0;
+  }
+
+  .nav-badge {
+    margin-left: auto;
+    background: var(--red);
+    color: white;
+    font-size: 10px;
+    font-weight: 700;
+    padding: 2px 6px;
+    border-radius: 20px;
+    min-width: 18px;
+    text-align: center;
+  }
+
+  .sidebar-footer {
+    padding: 16px;
+    border-top: 1px solid var(--border);
+    font-size: 11px;
+    color: var(--text-dim);
+  }
+
+  /* ===== MAIN ===== */
+  .main {
+    margin-left: var(--sidebar-w);
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    overflow: hidden;
+  }
+
+  .topbar {
+    height: 56px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    padding: 0 28px;
+    gap: 16px;
+    background: var(--surface);
+    flex-shrink: 0;
+  }
+
+  .topbar-title {
+    font-family: var(--font-display);
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--text);
+    flex: 1;
+  }
+
+  .topbar-search {
+    display: flex;
+    align-items: center;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 0 12px;
+    gap: 8px;
+    height: 34px;
+    width: 240px;
+  }
+
+  .topbar-search input {
+    background: none;
+    border: none;
+    outline: none;
+    color: var(--text);
+    font-size: 13px;
+    width: 100%;
+    font-family: var(--font-body);
+  }
+
+  .topbar-search input::placeholder { color: var(--text-muted); }
+
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 8px 16px;
+    border-radius: var(--radius-sm);
+    border: none;
+    font-family: var(--font-body);
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all var(--transition);
+    white-space: nowrap;
+  }
+
+  .btn-primary {
+    background: var(--accent);
+    color: #0d0f14;
+  }
+  .btn-primary:hover { background: var(--accent-hover); }
+
+  .btn-ghost {
+    background: var(--surface2);
+    color: var(--text-muted);
+    border: 1px solid var(--border);
+  }
+  .btn-ghost:hover { background: var(--surface3); color: var(--text); }
+
+  .btn-danger {
+    background: var(--red-dim);
+    color: var(--red);
+    border: 1px solid rgba(239,68,68,0.2);
+  }
+  .btn-danger:hover { background: var(--red); color: white; }
+
+  .btn-success {
+    background: var(--green-dim);
+    color: var(--green);
+    border: 1px solid rgba(39,201,126,0.2);
+  }
+  .btn-success:hover { background: var(--green); color: white; }
+
+  .btn-sm { padding: 5px 12px; font-size: 12px; }
+
+  .content {
+    flex: 1;
+    overflow-y: auto;
+    padding: 28px;
+  }
+
+  /* ===== PAGES ===== */
+  .page { display: none; }
+  .page.active { display: block; }
+
+  /* ===== CARDS ===== */
+  .stat-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 14px;
+    margin-bottom: 28px;
+  }
+
+  .stat-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px;
+    transition: border-color var(--transition);
+  }
+
+  .stat-card:hover { border-color: var(--border-hover); }
+
+  .stat-label {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text-muted);
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    margin-bottom: 10px;
+  }
+
+  .stat-value {
+    font-family: var(--font-display);
+    font-size: 32px;
+    font-weight: 800;
+    line-height: 1;
+    margin-bottom: 4px;
+  }
+
+  .stat-sub {
+    font-size: 12px;
+    color: var(--text-muted);
+  }
+
+  .stat-accent { color: var(--accent); }
+  .stat-green { color: var(--green); }
+  .stat-red { color: var(--red); }
+  .stat-blue { color: var(--blue); }
+  .stat-purple { color: var(--purple); }
+
+  /* ===== GRID CATEGORIAS ===== */
+  .cat-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 16px;
+    margin-bottom: 28px;
+  }
+
+  .cat-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px;
+    cursor: pointer;
+    transition: all var(--transition);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .cat-card:hover {
+    border-color: var(--border-hover);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+  }
+
+  .cat-card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 16px;
+  }
+
+  .cat-icon {
+    width: 44px;
+    height: 44px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    background: var(--surface2);
+  }
+
+  .cat-total {
+    font-family: var(--font-display);
+    font-size: 28px;
+    font-weight: 800;
+    color: var(--text);
+  }
+
+  .cat-name {
+    font-family: var(--font-display);
+    font-size: 15px;
+    font-weight: 700;
+    margin-bottom: 12px;
+  }
+
+  .cat-bars {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 12px;
+  }
+
+  .cat-bar {
+    height: 4px;
+    border-radius: 2px;
+    flex: 1;
+    background: var(--surface3);
+    overflow: hidden;
+  }
+
+  .cat-bar-fill {
+    height: 100%;
+    border-radius: 2px;
+  }
+
+  .cat-stats {
+    display: flex;
+    gap: 14px;
+  }
+
+  .cat-stat {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 11px;
+    color: var(--text-muted);
+  }
+
+  .dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  .dot-green { background: var(--green); }
+  .dot-accent { background: var(--accent); }
+  .dot-red { background: var(--red); }
+  .dot-muted { background: var(--text-dim); }
+
+  /* ===== TABLE ===== */
+  .table-container {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+  }
+
+  .table-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 18px 20px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .table-title {
+    font-family: var(--font-display);
+    font-size: 14px;
+    font-weight: 700;
+  }
+
+  .table-actions {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+
+  thead th {
+    padding: 12px 16px;
+    text-align: left;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text-muted);
+    letter-spacing: 0.8px;
+    text-transform: uppercase;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface);
+  }
+
+  tbody tr {
+    border-bottom: 1px solid var(--border);
+    transition: background var(--transition);
+    cursor: pointer;
+  }
+
+  tbody tr:last-child { border-bottom: none; }
+  tbody tr:hover { background: var(--surface2); }
+
+  td {
+    padding: 13px 16px;
+    font-size: 13px;
+    color: var(--text);
+  }
+
+  .td-muted { color: var(--text-muted); font-size: 12px; }
+
+  /* ===== BADGES ===== */
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 3px 10px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.3px;
+  }
+
+  .badge-green { background: var(--green-dim); color: var(--green); }
+  .badge-accent { background: var(--accent-dim); color: var(--accent); }
+  .badge-red { background: var(--red-dim); color: var(--red); }
+  .badge-blue { background: var(--blue-dim); color: var(--blue); }
+  .badge-purple { background: var(--purple-dim); color: var(--purple); }
+  .badge-muted { background: var(--surface3); color: var(--text-muted); }
+  .badge-orange { background: var(--orange-dim); color: var(--orange); }
+
+  /* ===== SECTION HEADER ===== */
+  .section-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 18px;
+  }
+
+  .section-title {
+    font-family: var(--font-display);
+    font-size: 18px;
+    font-weight: 800;
+  }
+
+  .section-sub {
+    font-size: 12px;
+    color: var(--text-muted);
+    margin-top: 2px;
+  }
+
+  /* ===== MODAL ===== */
+  .modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.7);
+    backdrop-filter: blur(4px);
+    z-index: 1000;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+  }
+
+  .modal-overlay.open { display: flex; }
+
+  .modal {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    width: 100%;
+    max-width: 560px;
+    max-height: 90vh;
+    overflow-y: auto;
+    animation: modalIn 0.2s ease;
+  }
+
+  @keyframes modalIn {
+    from { opacity: 0; transform: scale(0.95) translateY(10px); }
+    to { opacity: 1; transform: scale(1) translateY(0); }
+  }
+
+  .modal-head {
+    padding: 22px 24px 18px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .modal-title {
+    font-family: var(--font-display);
+    font-size: 16px;
+    font-weight: 700;
+  }
+
+  .modal-close {
+    width: 30px;
+    height: 30px;
+    border-radius: 6px;
+    background: var(--surface2);
+    border: none;
+    color: var(--text-muted);
+    font-size: 16px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all var(--transition);
+  }
+
+  .modal-close:hover { background: var(--surface3); color: var(--text); }
+
+  .modal-body { padding: 24px; }
+
+  .modal-footer {
+    padding: 16px 24px;
+    border-top: 1px solid var(--border);
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+  }
+
+  /* ===== FORM ===== */
+  .form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+  }
+
+  .form-grid.full { grid-template-columns: 1fr; }
+
+  .form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .form-group.span2 { grid-column: span 2; }
+
+  .form-label {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-muted);
+    letter-spacing: 0.5px;
+  }
+
+  .form-input, .form-select, .form-textarea {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 10px 12px;
+    color: var(--text);
+    font-family: var(--font-body);
+    font-size: 13px;
+    outline: none;
+    transition: border-color var(--transition);
+    width: 100%;
+  }
+
+  .form-input:focus, .form-select:focus, .form-textarea:focus {
+    border-color: var(--accent);
+  }
+
+  .form-select option { background: var(--surface2); }
+  .form-textarea { resize: vertical; min-height: 80px; }
+
+  /* ===== FILTERS ===== */
+  .filter-bar {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 18px;
+    flex-wrap: wrap;
+  }
+
+  .filter-chip {
+    padding: 6px 14px;
+    border-radius: 20px;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--text-muted);
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all var(--transition);
+  }
+
+  .filter-chip:hover { border-color: var(--border-hover); color: var(--text); }
+  .filter-chip.active { background: var(--accent-dim); border-color: var(--accent); color: var(--accent); }
+
+  /* ===== MACHINE DETAIL ===== */
+  .detail-grid {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 20px;
+  }
+
+  .info-block {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+  }
+
+  .info-block-head {
+    padding: 14px 18px;
+    border-bottom: 1px solid var(--border);
+    font-family: var(--font-display);
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .info-rows { padding: 4px 0; }
+
+  .info-row {
+    display: flex;
+    align-items: center;
+    padding: 10px 18px;
+    border-bottom: 1px solid var(--border);
+    gap: 12px;
+  }
+
+  .info-row:last-child { border-bottom: none; }
+
+  .info-key {
+    font-size: 12px;
+    color: var(--text-muted);
+    min-width: 130px;
+    flex-shrink: 0;
+  }
+
+  .info-val {
+    font-size: 13px;
+    color: var(--text);
+    font-weight: 500;
+  }
+
+  /* ===== PROBLEMS ===== */
+  .problem-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px 18px;
+    margin-bottom: 10px;
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    transition: border-color var(--transition);
+  }
+
+  .problem-card:hover { border-color: var(--border-hover); }
+
+  .problem-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    flex-shrink: 0;
+  }
+
+  .problem-content { flex: 1; }
+
+  .problem-title {
+    font-size: 13.5px;
+    font-weight: 500;
+    margin-bottom: 4px;
+  }
+
+  .problem-meta {
+    font-size: 12px;
+    color: var(--text-muted);
+    display: flex;
+    gap: 14px;
+    flex-wrap: wrap;
+    margin-top: 6px;
+  }
+
+  .problem-actions {
+    display: flex;
+    gap: 6px;
+    flex-shrink: 0;
+  }
+
+  /* ===== EMPTY STATE ===== */
+  .empty {
+    text-align: center;
+    padding: 60px 20px;
+    color: var(--text-muted);
+  }
+
+  .empty-icon { font-size: 40px; margin-bottom: 12px; }
+  .empty-title { font-family: var(--font-display); font-size: 16px; color: var(--text-dim); margin-bottom: 6px; }
+  .empty-sub { font-size: 13px; }
+
+  /* ===== TOAST ===== */
+  .toast-container {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    z-index: 9999;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .toast {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 12px 16px;
+    font-size: 13px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-width: 260px;
+    animation: toastIn 0.2s ease;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+  }
+
+  .toast.success { border-left: 3px solid var(--green); }
+  .toast.error { border-left: 3px solid var(--red); }
+
+  @keyframes toastIn {
+    from { opacity: 0; transform: translateX(20px); }
+    to { opacity: 1; transform: translateX(0); }
+  }
+
+  /* ===== SCROLLBAR ===== */
+  ::-webkit-scrollbar { width: 4px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--surface3); border-radius: 4px; }
+
+  /* ===== LOADING ===== */
+  .loading {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 200px;
+    color: var(--text-muted);
+    gap: 12px;
+  }
+
+  .spinner {
+    width: 20px; height: 20px;
+    border: 2px solid var(--surface3);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+  }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+  .three-col { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; }
+
+  .mb-20 { margin-bottom: 20px; }
+  .mb-28 { margin-bottom: 28px; }
+
+  /* ===== BACK BTN ===== */
+  .back-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    color: var(--text-muted);
+    cursor: pointer;
+    margin-bottom: 20px;
+    transition: color var(--transition);
+  }
+  .back-btn:hover { color: var(--text); }
+
+  .machine-hero {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 24px;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+  }
+
+  .machine-hero-icon {
+    width: 64px; height: 64px;
+    background: var(--surface2);
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 28px;
+    flex-shrink: 0;
+  }
+
+  .machine-hero-info { flex: 1; }
+  .machine-hero-name {
+    font-family: var(--font-display);
+    font-size: 22px;
+    font-weight: 800;
+    margin-bottom: 4px;
+  }
+
+  .machine-hero-meta {
+    font-size: 13px;
+    color: var(--text-muted);
+    display: flex;
+    gap: 16px;
+  }
+
+  .machine-hero-actions { display: flex; gap: 8px; }
+
+  /* Responsive */
+  @media (max-width: 768px) {
+    .sidebar { transform: translateX(-100%); }
+    .main { margin-left: 0; }
+    .form-grid { grid-template-columns: 1fr; }
+    .form-group.span2 { grid-column: span 1; }
+    .detail-grid { grid-template-columns: 1fr; }
+    .two-col { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<aside class="sidebar" id="sidebar">
+  <div class="sidebar-logo">
+    <div class="logo-mark">CB Locações</div>
+    <div class="logo-sub">Gestão de Frota</div>
+  </div>
+  <nav class="sidebar-nav">
+    <div class="nav-section">
+      <div class="nav-label">Principal</div>
+      <a class="nav-item active" data-page="dashboard" onclick="nav('dashboard')">
+        <span class="icon">◼</span> Dashboard
+      </a>
+      <a class="nav-item" data-page="frota" onclick="nav('frota')">
+        <span class="icon">🚜</span> Frota
+      </a>
+      <a class="nav-item" data-page="controle" onclick="nav('controle')">
+        <span class="icon">📍</span> Controle / Alocação
+      </a>
+      <a class="nav-item" data-page="problemas" onclick="nav('problemas')">
+        <span class="icon">⚠️</span> Problemas
+        <span class="nav-badge" id="badge-problemas" style="display:none">0</span>
+      </a>
+    </div>
+    <div class="nav-section">
+      <div class="nav-label">Cadastros</div>
+      <a class="nav-item" data-page="operadores" onclick="nav('operadores')">
+        <span class="icon">👷</span> Operadores
+      </a>
+      <a class="nav-item" data-page="obras" onclick="nav('obras')">
+        <span class="icon">🏗️</span> Obras
+      </a>
+    </div>
+  </nav>
+  <div class="sidebar-footer">
+    Sistema CB Locações v1.0
+  </div>
+</aside>
+
+<!-- MAIN -->
+<main class="main">
+  <header class="topbar">
+    <div class="topbar-title" id="page-title">Dashboard</div>
+    <div class="topbar-search">
+      <span style="color:var(--text-muted);font-size:13px">🔍</span>
+      <input type="text" placeholder="Buscar máquinas..." id="global-search" oninput="globalSearch(this.value)">
+    </div>
+    <button class="btn btn-primary" id="topbar-btn" onclick="topbarAction()">
+      + Nova Máquina
+    </button>
+  </header>
+
+  <div class="content" id="content">
+
+    <!-- ===== DASHBOARD ===== -->
+    <div class="page active" id="page-dashboard">
+      <div class="stat-grid" id="dash-stats">
+        <div class="loading"><div class="spinner"></div> Carregando...</div>
+      </div>
+      <div class="cat-grid" id="dash-cats"></div>
+      <div class="two-col mb-20">
+        <div class="table-container">
+          <div class="table-header">
+            <div class="table-title">Problemas Pendentes</div>
+            <button class="btn btn-ghost btn-sm" onclick="nav('problemas')">Ver todos</button>
+          </div>
+          <div id="dash-problemas"></div>
+        </div>
+        <div class="table-container">
+          <div class="table-header">
+            <div class="table-title">Máquinas Locadas</div>
+            <button class="btn btn-ghost btn-sm" onclick="nav('controle')">Ver controle</button>
+          </div>
+          <div id="dash-alocacoes"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== FROTA ===== -->
+    <div class="page" id="page-frota">
+      <div class="section-header mb-20">
+        <div>
+          <div class="section-title">Frota Completa</div>
+          <div class="section-sub">Todas as máquinas cadastradas</div>
+        </div>
+      </div>
+      <div class="filter-bar" id="frota-filters"></div>
+      <div class="table-container">
+        <div class="table-header">
+          <div class="table-title" id="frota-count">Máquinas</div>
+          <div class="table-actions">
+            <select class="form-select" style="width:auto;padding:6px 10px;font-size:12px" id="frota-status-filter" onchange="loadFrota()">
+              <option value="">Todos os status</option>
+              <option value="disponivel">Disponível</option>
+              <option value="locado">Locado</option>
+              <option value="manutencao">Manutenção</option>
+              <option value="inativo">Inativo</option>
+            </select>
+          </div>
+        </div>
+        <div id="frota-table-wrap">
+          <div class="loading"><div class="spinner"></div> Carregando...</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== MACHINE DETAIL ===== -->
+    <div class="page" id="page-maquina-detail">
+      <div class="back-btn" onclick="nav('frota')">← Voltar para Frota</div>
+      <div id="maquina-detail-content"></div>
+    </div>
+
+    <!-- ===== CONTROLE ===== -->
+    <div class="page" id="page-controle">
+      <div class="section-header mb-20">
+        <div>
+          <div class="section-title">Controle de Alocação</div>
+          <div class="section-sub">Máquinas por obra e operador</div>
+        </div>
+        <button class="btn btn-primary" onclick="openModal('modal-alocar')">+ Alocar Máquina</button>
+      </div>
+      <div class="table-container">
+        <div class="table-header">
+          <div class="table-title">Alocações Ativas</div>
+        </div>
+        <div id="controle-table">
+          <div class="loading"><div class="spinner"></div> Carregando...</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== PROBLEMAS ===== -->
+    <div class="page" id="page-problemas">
+      <div class="section-header mb-20">
+        <div>
+          <div class="section-title">Problemas & Manutenção</div>
+          <div class="section-sub">Ocorrências reportadas</div>
+        </div>
+        <button class="btn btn-primary" onclick="openModal('modal-problema')">+ Reportar Problema</button>
+      </div>
+      <div class="filter-bar">
+        <div class="filter-chip active" onclick="filterProblemas('')" data-filter="">Todos</div>
+        <div class="filter-chip" onclick="filterProblemas('pendente')" data-filter="pendente">⏳ Pendentes</div>
+        <div class="filter-chip" onclick="filterProblemas('resolvido')" data-filter="resolvido">✅ Resolvidos</div>
+        <div class="filter-chip" onclick="filterProblemasPrioridade('critica')" data-filter="critica">🔴 Críticos</div>
+        <div class="filter-chip" onclick="filterProblemasPrioridade('alta')" data-filter="alta">🟠 Alta</div>
+      </div>
+      <div id="problemas-list">
+        <div class="loading"><div class="spinner"></div> Carregando...</div>
+      </div>
+    </div>
+
+    <!-- ===== OPERADORES ===== -->
+    <div class="page" id="page-operadores">
+      <div class="section-header mb-20">
+        <div>
+          <div class="section-title">Operadores</div>
+          <div class="section-sub">Equipe de operação</div>
+        </div>
+        <button class="btn btn-primary" onclick="openModal('modal-operador')">+ Novo Operador</button>
+      </div>
+      <div class="table-container">
+        <div class="table-header"><div class="table-title">Operadores cadastrados</div></div>
+        <div id="operadores-table">
+          <div class="loading"><div class="spinner"></div> Carregando...</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== OBRAS ===== -->
+    <div class="page" id="page-obras">
+      <div class="section-header mb-20">
+        <div>
+          <div class="section-title">Obras</div>
+          <div class="section-sub">Locais de alocação</div>
+        </div>
+        <button class="btn btn-primary" onclick="openModal('modal-obra')">+ Nova Obra</button>
+      </div>
+      <div class="table-container">
+        <div class="table-header"><div class="table-title">Obras cadastradas</div></div>
+        <div id="obras-table">
+          <div class="loading"><div class="spinner"></div> Carregando...</div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /content -->
+</main>
+
+<!-- TOAST -->
+<div class="toast-container" id="toasts"></div>
+
+<!-- ===== MODALS ===== -->
+
+<!-- Modal Nova Máquina -->
+<div class="modal-overlay" id="modal-maquina">
+  <div class="modal">
+    <div class="modal-head">
+      <div class="modal-title" id="modal-maquina-title">Nova Máquina</div>
+      <button class="modal-close" onclick="closeModal('modal-maquina')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-grid">
+        <div class="form-group">
+          <label class="form-label">Categoria *</label>
+          <select class="form-select" id="m-categoria" required></select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Nome / Identificação *</label>
+          <input class="form-input" id="m-nome" placeholder="Ex: Minicarregadeira 1" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Número de Série</label>
+          <input class="form-input" id="m-serie" placeholder="Número de série">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Placa</label>
+          <input class="form-input" id="m-placa" placeholder="Placa do veículo">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Local de Compra</label>
+          <input class="form-input" id="m-local-compra" placeholder="Fornecedor / Loja">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Número da Nota</label>
+          <input class="form-input" id="m-nota" placeholder="NF de aquisição">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Valor de Locação (R$)</label>
+          <input class="form-input" id="m-valor" type="number" step="0.01" placeholder="0,00">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Combustível</label>
+          <select class="form-select" id="m-combustivel">
+            <option value="">Selecionar</option>
+            <option value="diesel">Diesel</option>
+            <option value="gasolina">Gasolina</option>
+            <option value="eletrico">Elétrico</option>
+            <option value="n/a">N/A</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Status Financeiro</label>
+          <select class="form-select" id="m-status-fin">
+            <option value="ok">OK</option>
+            <option value="pendente">Pendente</option>
+            <option value="inadimplente">Inadimplente</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Status Operacional</label>
+          <select class="form-select" id="m-status">
+            <option value="disponivel">Disponível</option>
+            <option value="locado">Locado</option>
+            <option value="manutencao">Manutenção</option>
+            <option value="inativo">Inativo</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Requer Operador?</label>
+          <select class="form-select" id="m-operador">
+            <option value="false">Não</option>
+            <option value="true">Sim</option>
+          </select>
+        </div>
+        <div class="form-group span2">
+          <label class="form-label">Observação</label>
+          <textarea class="form-textarea" id="m-obs" placeholder="Observações gerais..."></textarea>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('modal-maquina')">Cancelar</button>
+      <button class="btn btn-primary" onclick="saveMaquina()">Salvar Máquina</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Alocar -->
+<div class="modal-overlay" id="modal-alocar">
+  <div class="modal">
+    <div class="modal-head">
+      <div class="modal-title">Alocar Máquina</div>
+      <button class="modal-close" onclick="closeModal('modal-alocar')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-grid full">
+        <div class="form-group">
+          <label class="form-label">Máquina *</label>
+          <select class="form-select" id="a-maquina" required></select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Obra / Local *</label>
+          <select class="form-select" id="a-obra" required></select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Operador (opcional)</label>
+          <select class="form-select" id="a-operador">
+            <option value="">Sem operador</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Data de Início</label>
+          <input class="form-input" id="a-data" type="date">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Observação</label>
+          <textarea class="form-textarea" id="a-obs" placeholder="Observações..."></textarea>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('modal-alocar')">Cancelar</button>
+      <button class="btn btn-primary" onclick="saveAlocacao()">Confirmar Alocação</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Problema -->
+<div class="modal-overlay" id="modal-problema">
+  <div class="modal">
+    <div class="modal-head">
+      <div class="modal-title">Reportar Problema</div>
+      <button class="modal-close" onclick="closeModal('modal-problema')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-grid full">
+        <div class="form-group">
+          <label class="form-label">Máquina *</label>
+          <select class="form-select" id="p-maquina" required></select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Tipo</label>
+          <select class="form-select" id="p-tipo">
+            <option value="">Selecionar</option>
+            <option value="mecanico">Mecânico</option>
+            <option value="eletrico">Elétrico</option>
+            <option value="hidraulico">Hidráulico</option>
+            <option value="estrutural">Estrutural</option>
+            <option value="pneu">Pneu / Esteira</option>
+            <option value="outro">Outro</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Prioridade</label>
+          <select class="form-select" id="p-prioridade">
+            <option value="baixa">Baixa</option>
+            <option value="media" selected>Média</option>
+            <option value="alta">Alta</option>
+            <option value="critica">Crítica</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Reportado por</label>
+          <input class="form-input" id="p-reportado" placeholder="Nome do responsável">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Descrição do Problema *</label>
+          <textarea class="form-textarea" id="p-desc" placeholder="Descreva o problema detalhadamente..." style="min-height:100px" required></textarea>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('modal-problema')">Cancelar</button>
+      <button class="btn btn-primary" onclick="saveProblema()">Reportar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Resolver Problema -->
+<div class="modal-overlay" id="modal-resolver">
+  <div class="modal">
+    <div class="modal-head">
+      <div class="modal-title">Marcar como Resolvido</div>
+      <button class="modal-close" onclick="closeModal('modal-resolver')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label class="form-label">Observação da Resolução</label>
+        <textarea class="form-textarea" id="r-obs" placeholder="Descreva o que foi feito para resolver..." style="min-height:100px"></textarea>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('modal-resolver')">Cancelar</button>
+      <button class="btn btn-success" onclick="confirmarResolver()">✓ Confirmar Resolução</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Operador -->
+<div class="modal-overlay" id="modal-operador">
+  <div class="modal">
+    <div class="modal-head">
+      <div class="modal-title" id="modal-op-title">Novo Operador</div>
+      <button class="modal-close" onclick="closeModal('modal-operador')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-grid full">
+        <div class="form-group">
+          <label class="form-label">Nome *</label>
+          <input class="form-input" id="op-nome" placeholder="Nome completo" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Telefone</label>
+          <input class="form-input" id="op-tel" placeholder="(85) 99999-9999">
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('modal-operador')">Cancelar</button>
+      <button class="btn btn-primary" onclick="saveOperador()">Salvar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Obra -->
+<div class="modal-overlay" id="modal-obra">
+  <div class="modal">
+    <div class="modal-head">
+      <div class="modal-title" id="modal-obra-title">Nova Obra</div>
+      <button class="modal-close" onclick="closeModal('modal-obra')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-grid full">
+        <div class="form-group">
+          <label class="form-label">Nome da Obra *</label>
+          <input class="form-input" id="ob-nome" placeholder="Ex: Cagece Chorozinho" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Localização</label>
+          <input class="form-input" id="ob-local" placeholder="Endereço ou cidade">
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('modal-obra')">Cancelar</button>
+      <button class="btn btn-primary" onclick="saveObra()">Salvar</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ===== STATE =====
+const state = {
+  currentPage: 'dashboard',
+  categorias: [],
+  maquinas: [],
+  operadores: [],
+  obras: [],
+  editingId: null,
+  resolvingId: null,
+  selectedCategoria: null,
+};
+
+// ===== API =====
+const API = '/api';
+
+async function api(path, opts = {}) {
+  try {
+    const res = await fetch(API + path, {
+      headers: { 'Content-Type': 'application/json' },
+      ...opts,
+      body: opts.body ? JSON.stringify(opts.body) : undefined
+    });
+    if (!res.ok) throw new Error(await res.text());
+    return res.json();
+  } catch (e) {
+    toast('Erro: ' + e.message, 'error');
+    throw e;
+  }
+}
+
+// ===== NAVIGATION =====
+const pageTitles = {
+  dashboard: 'Dashboard',
+  frota: 'Frota de Máquinas',
+  controle: 'Controle de Alocação',
+  problemas: 'Problemas & Manutenção',
+  operadores: 'Operadores',
+  obras: 'Obras',
+  'maquina-detail': 'Detalhes da Máquina'
+};
+
+const topbarActions = {
+  dashboard: { label: '+ Nova Máquina', fn: () => openNewMaquina() },
+  frota: { label: '+ Nova Máquina', fn: () => openNewMaquina() },
+  controle: { label: '+ Alocar', fn: () => openModal('modal-alocar') },
+  problemas: { label: '+ Reportar Problema', fn: () => openModal('modal-problema') },
+  operadores: { label: '+ Novo Operador', fn: () => openModal('modal-operador') },
+  obras: { label: '+ Nova Obra', fn: () => openModal('modal-obra') },
+  'maquina-detail': { label: '← Voltar', fn: () => nav('frota') },
+};
+
+function nav(page) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+
+  document.getElementById('page-' + page)?.classList.add('active');
+  document.querySelector(`[data-page="${page}"]`)?.classList.add('active');
+  document.getElementById('page-title').textContent = pageTitles[page] || '';
+
+  const btn = document.getElementById('topbar-btn');
+  const action = topbarActions[page];
+  if (action) {
+    btn.textContent = action.label;
+    btn.style.display = '';
+  } else {
+    btn.style.display = 'none';
+  }
+
+  state.currentPage = page;
+  loadPage(page);
+  document.getElementById('content').scrollTop = 0;
+}
+
+function topbarAction() {
+  const action = topbarActions[state.currentPage];
+  if (action) action.fn();
+}
+
+function loadPage(page) {
+  if (page === 'dashboard') loadDashboard();
+  else if (page === 'frota') loadFrota();
+  else if (page === 'controle') loadControle();
+  else if (page === 'problemas') loadProblemas();
+  else if (page === 'operadores') loadOperadores();
+  else if (page === 'obras') loadObras();
+}
+
+// ===== HELPERS =====
+function statusBadge(status) {
+  const map = {
+    disponivel: ['badge-green', '● Disponível'],
+    locado: ['badge-accent', '● Locado'],
+    manutencao: ['badge-red', '● Manutenção'],
+    inativo: ['badge-muted', '● Inativo'],
+  };
+  const [cls, label] = map[status] || ['badge-muted', status];
+  return `<span class="badge ${cls}">${label}</span>`;
+}
+
+function prioridadeBadge(p) {
+  const map = {
+    critica: ['badge-red', '🔴 Crítica'],
+    alta: ['badge-orange', '🟠 Alta'],
+    media: ['badge-accent', '🟡 Média'],
+    baixa: ['badge-muted', '⚪ Baixa'],
+  };
+  const [cls, label] = map[p] || ['badge-muted', p];
+  return `<span class="badge ${cls}">${label}</span>`;
+}
+
+function statusFinBadge(s) {
+  const map = {
+    ok: ['badge-green', 'OK'],
+    pendente: ['badge-accent', 'Pendente'],
+    inadimplente: ['badge-red', 'Inadimplente'],
+  };
+  const [cls, label] = map[s] || ['badge-muted', s || '—'];
+  return `<span class="badge ${cls}">${label}</span>`;
+}
+
+function fmtDate(d) {
+  if (!d) return '—';
+  return new Date(d).toLocaleDateString('pt-BR');
+}
+
+function fmtCurrency(v) {
+  if (!v) return '—';
+  return 'R$ ' + parseFloat(v).toLocaleString('pt-BR', { minimumFractionDigits: 2 });
+}
+
+function toast(msg, type = 'success') {
+  const container = document.getElementById('toasts');
+  const el = document.createElement('div');
+  el.className = `toast ${type}`;
+  el.innerHTML = `<span>${type === 'success' ? '✓' : '✕'}</span> ${msg}`;
+  container.appendChild(el);
+  setTimeout(() => el.remove(), 3500);
+}
+
+// ===== DASHBOARD =====
+async function loadDashboard() {
+  try {
+    const data = await api('/dashboard');
+
+    // Stats
+    const t = data.totais;
+    document.getElementById('dash-stats').innerHTML = `
+      <div class="stat-card">
+        <div class="stat-label">Total de Máquinas</div>
+        <div class="stat-value stat-accent">${t.total_maquinas}</div>
+        <div class="stat-sub">Na frota</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Locadas</div>
+        <div class="stat-value stat-accent">${t.locadas}</div>
+        <div class="stat-sub">Em operação</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Disponíveis</div>
+        <div class="stat-value stat-green">${t.disponiveis}</div>
+        <div class="stat-sub">Prontas para uso</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Manutenção</div>
+        <div class="stat-value stat-red">${t.em_manutencao}</div>
+        <div class="stat-sub">Aguardando reparo</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Inativas</div>
+        <div class="stat-value stat-purple">${t.inativas}</div>
+        <div class="stat-sub">Fora de operação</div>
+      </div>
+    `;
+
+    // Categorias
+    document.getElementById('dash-cats').innerHTML = data.porCategoria
+      .filter(c => parseInt(c.total) > 0)
+      .map(c => {
+        const total = parseInt(c.total) || 1;
+        const locPct = Math.round((c.locadas / total) * 100);
+        const dispPct = Math.round((c.disponiveis / total) * 100);
+        const manPct = Math.round((c.manutencao / total) * 100);
+        return `
+        <div class="cat-card" onclick="filterFrotaCategoria(${c.id}, '${c.nome}')">
+          <div class="cat-card-header">
+            <div class="cat-icon">${c.icone}</div>
+            <div class="cat-total">${c.total}</div>
+          </div>
+          <div class="cat-name">${c.nome}</div>
+          <div class="cat-bars">
+            <div class="cat-bar" title="Locadas ${locPct}%">
+              <div class="cat-bar-fill" style="width:${locPct}%;background:var(--accent)"></div>
+            </div>
+            <div class="cat-bar" title="Disponíveis ${dispPct}%">
+              <div class="cat-bar-fill" style="width:${dispPct}%;background:var(--green)"></div>
+            </div>
+            <div class="cat-bar" title="Manutenção ${manPct}%">
+              <div class="cat-bar-fill" style="width:${manPct}%;background:var(--red)"></div>
+            </div>
+          </div>
+          <div class="cat-stats">
+            <div class="cat-stat"><div class="dot dot-accent"></div> ${c.locadas} loc</div>
+            <div class="cat-stat"><div class="dot dot-green"></div> ${c.disponiveis} disp</div>
+            <div class="cat-stat"><div class="dot dot-red"></div> ${c.manutencao} man</div>
+            ${c.receita_ativa > 0 ? `<div class="cat-stat" style="margin-left:auto;color:var(--accent);font-weight:600">${fmtCurrency(c.receita_ativa)}</div>` : ''}
+          </div>
+        </div>`;
+      }).join('') || '<div class="empty"><div class="empty-title">Nenhuma categoria com máquinas</div></div>';
+
+    // Badge sidebar
+    const pendentes = data.problemasPendentes.length;
+    const badge = document.getElementById('badge-problemas');
+    badge.textContent = pendentes;
+    badge.style.display = pendentes > 0 ? '' : 'none';
+
+    // Problemas
+    document.getElementById('dash-problemas').innerHTML = data.problemasPendentes.length === 0
+      ? `<div class="empty"><div class="empty-icon">✅</div><div class="empty-title">Sem problemas pendentes</div></div>`
+      : `<table><thead><tr><th>Máquina</th><th>Problema</th><th>Prioridade</th></tr></thead><tbody>
+        ${data.problemasPendentes.map(p => `
+          <tr onclick="nav('problemas')">
+            <td>${p.icone} ${p.maquina_nome || '—'}</td>
+            <td class="td-muted">${p.descricao.substring(0, 45)}${p.descricao.length > 45 ? '...' : ''}</td>
+            <td>${prioridadeBadge(p.prioridade)}</td>
+          </tr>`).join('')}
+        </tbody></table>`;
+
+    // Alocações
+    document.getElementById('dash-alocacoes').innerHTML = data.alocacoesAtivas.length === 0
+      ? `<div class="empty"><div class="empty-icon">📋</div><div class="empty-title">Nenhuma alocação ativa</div></div>`
+      : `<table><thead><tr><th>Máquina</th><th>Obra</th><th>Operador</th></tr></thead><tbody>
+        ${data.alocacoesAtivas.map(a => `
+          <tr>
+            <td>${a.icone} ${a.maquina_nome}</td>
+            <td class="td-muted">${a.obra_nome || '—'}</td>
+            <td class="td-muted">${a.operador_nome || '—'}</td>
+          </tr>`).join('')}
+        </tbody></table>`;
+
+  } catch (e) {
+    document.getElementById('dash-stats').innerHTML = `<div class="empty"><div class="empty-title">Erro ao carregar</div></div>`;
+  }
+}
+
+// ===== FROTA =====
+function filterFrotaCategoria(id, nome) {
+  state.selectedCategoria = id;
+  nav('frota');
+}
+
+async function loadFrota() {
+  const wrap = document.getElementById('frota-table-wrap');
+  wrap.innerHTML = `<div class="loading"><div class="spinner"></div> Carregando...</div>`;
+
+  try {
+    // Load categorias for filters
+    if (state.categorias.length === 0) {
+      state.categorias = await api('/categorias');
+    }
+
+    const filterBar = document.getElementById('frota-filters');
+    filterBar.innerHTML = `
+      <div class="filter-chip ${!state.selectedCategoria ? 'active' : ''}" onclick="setCatFilter(null)">Todas</div>
+      ${state.categorias.map(c => `
+        <div class="filter-chip ${state.selectedCategoria == c.id ? 'active' : ''}" onclick="setCatFilter(${c.id})">
+          ${c.icone} ${c.nome} <span style="opacity:0.6">${c.total_maquinas}</span>
+        </div>`).join('')}
+    `;
+
+    const statusFilter = document.getElementById('frota-status-filter').value;
+    let url = '/maquinas';
+    const params = new URLSearchParams();
+    if (state.selectedCategoria) params.set('categoria', state.selectedCategoria);
+    if (statusFilter) params.set('status', statusFilter);
+    if (params.toString()) url += '?' + params;
+
+    const maquinas = await api(url);
+    state.maquinas = maquinas;
+
+    document.getElementById('frota-count').textContent = `${maquinas.length} máquinas`;
+
+    if (maquinas.length === 0) {
+      wrap.innerHTML = `<div class="empty"><div class="empty-icon">🚧</div><div class="empty-title">Nenhuma máquina encontrada</div><div class="empty-sub">Adicione máquinas à frota</div></div>`;
+      return;
+    }
+
+    wrap.innerHTML = `
+      <table>
+        <thead>
+          <tr>
+            <th>Máquina</th>
+            <th>Categoria</th>
+            <th>Série / Placa</th>
+            <th>Obra Atual</th>
+            <th>Operador</th>
+            <th>Valor Loc.</th>
+            <th>Fin.</th>
+            <th>Status</th>
+            <th>Problemas</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${maquinas.map(m => `
+            <tr onclick="openMaquinaDetail(${m.id})">
+              <td><strong>${m.nome}</strong></td>
+              <td>${m.categoria_icone || ''} ${m.categoria_nome || '—'}</td>
+              <td class="td-muted">${[m.numero_serie, m.placa].filter(Boolean).join(' / ') || '—'}</td>
+              <td class="td-muted">${m.obra_nome || '—'}</td>
+              <td class="td-muted">${m.operador_nome || '—'}</td>
+              <td class="td-muted">${fmtCurrency(m.valor_locacao)}</td>
+              <td>${statusFinBadge(m.status_financeiro)}</td>
+              <td>${statusBadge(m.status)}</td>
+              <td>${parseInt(m.problemas_pendentes) > 0
+                ? `<span class="badge badge-red">⚠ ${m.problemas_pendentes}</span>`
+                : '<span class="badge badge-muted">—</span>'}</td>
+            </tr>`).join('')}
+        </tbody>
+      </table>`;
+  } catch (e) {}
+}
+
+function setCatFilter(id) {
+  state.selectedCategoria = id;
+  loadFrota();
+}
+
+// ===== MACHINE DETAIL =====
+async function openMaquinaDetail(id) {
+  nav('maquina-detail');
+  const container = document.getElementById('maquina-detail-content');
+  container.innerHTML = `<div class="loading"><div class="spinner"></div> Carregando...</div>`;
+
+  try {
+    const data = await api(`/maquinas/${id}`);
+    const m = data.maquina;
+
+    container.innerHTML = `
+      <div class="machine-hero">
+        <div class="machine-hero-icon">${m.categoria_icone || '🚧'}</div>
+        <div class="machine-hero-info">
+          <div class="machine-hero-name">${m.nome}</div>
+          <div class="machine-hero-meta">
+            <span>${m.categoria_nome || '—'}</span>
+            ${m.numero_serie ? `<span>Série: ${m.numero_serie}</span>` : ''}
+            ${m.placa ? `<span>Placa: ${m.placa}</span>` : ''}
+          </div>
+          <div style="margin-top:10px;display:flex;gap:8px">
+            ${statusBadge(m.status)}
+            ${statusFinBadge(m.status_financeiro)}
+            ${parseInt(data.problemas.filter(p => p.status === 'pendente').length) > 0
+              ? `<span class="badge badge-red">⚠ ${data.problemas.filter(p => p.status === 'pendente').length} problemas</span>`
+              : ''}
+          </div>
+        </div>
+        <div class="machine-hero-actions">
+          <button class="btn btn-ghost" onclick="openEditMaquina(${m.id})">✏️ Editar</button>
+          <button class="btn btn-primary" onclick="openAlocarFromDetail(${m.id})">📍 Alocar</button>
+        </div>
+      </div>
+
+      <div class="detail-grid mb-20">
+        <div>
+          <div class="info-block mb-20">
+            <div class="info-block-head">Dados da Frota</div>
+            <div class="info-rows">
+              <div class="info-row"><span class="info-key">Local de Compra</span><span class="info-val">${m.local_compra || '—'}</span></div>
+              <div class="info-row"><span class="info-key">Nota Fiscal</span><span class="info-val">${m.numero_nota || '—'}</span></div>
+              <div class="info-row"><span class="info-key">Combustível</span><span class="info-val">${m.combustivel || '—'}</span></div>
+              <div class="info-row"><span class="info-key">Requer Operador</span><span class="info-val">${m.tem_operador ? 'Sim' : 'Não'}</span></div>
+              <div class="info-row"><span class="info-key">Valor de Locação</span><span class="info-val" style="color:var(--accent)">${fmtCurrency(m.valor_locacao)}</span></div>
+              <div class="info-row"><span class="info-key">Observação</span><span class="info-val">${m.observacao || '—'}</span></div>
+            </div>
+          </div>
+
+          <div class="info-block">
+            <div class="info-block-head">Histórico de Alocações</div>
+            ${data.alocacoes.length === 0
+              ? `<div class="empty" style="padding:30px"><div class="empty-title">Sem alocações registradas</div></div>`
+              : `<table><thead><tr><th>Obra</th><th>Operador</th><th>Início</th><th>Fim</th><th>Status</th></tr></thead><tbody>
+                  ${data.alocacoes.map(a => `<tr>
+                    <td>${a.obra_nome || '—'}</td>
+                    <td class="td-muted">${a.operador_nome || '—'}</td>
+                    <td class="td-muted">${fmtDate(a.data_inicio)}</td>
+                    <td class="td-muted">${fmtDate(a.data_fim) || '—'}</td>
+                    <td>${a.ativa ? '<span class="badge badge-green">Ativa</span>' : '<span class="badge badge-muted">Encerrada</span>'}</td>
+                  </tr>`).join('')}
+                </tbody></table>`}
+          </div>
+        </div>
+
+        <div>
+          <div class="info-block">
+            <div class="info-block-head">Problemas</div>
+            <div style="padding:12px">
+              <button class="btn btn-primary" style="width:100%;margin-bottom:12px" onclick="openProblemaForMaquina(${m.id})">+ Reportar Problema</button>
+              ${data.problemas.length === 0
+                ? `<div class="empty" style="padding:20px"><div class="empty-title">Sem problemas</div></div>`
+                : data.problemas.map(p => `
+                  <div class="problem-card" style="margin-bottom:8px">
+                    <div>
+                      ${prioridadeBadge(p.prioridade)}
+                      <div style="font-size:13px;margin-top:6px">${p.descricao.substring(0,80)}${p.descricao.length > 80 ? '...' : ''}</div>
+                      <div class="problem-meta">
+                        <span>${p.tipo || '—'}</span>
+                        <span>${fmtDate(p.criado_em)}</span>
+                        <span>${p.status === 'pendente'
+                          ? '<span class="badge badge-red">Pendente</span>'
+                          : '<span class="badge badge-green">Resolvido</span>'}</span>
+                      </div>
+                    </div>
+                  </div>`).join('')}
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+  } catch (e) {
+    container.innerHTML = `<div class="empty"><div class="empty-title">Erro ao carregar</div></div>`;
+  }
+}
+
+function openProblemaForMaquina(id) {
+  openModal('modal-problema');
+  setTimeout(async () => {
+    const maquinas = await api('/maquinas');
+    const sel = document.getElementById('p-maquina');
+    sel.innerHTML = maquinas.map(m => `<option value="${m.id}" ${m.id == id ? 'selected' : ''}>${m.categoria_icone} ${m.nome}</option>`).join('');
+  }, 100);
+}
+
+function openAlocarFromDetail(id) {
+  openModal('modal-alocar');
+  setTimeout(async () => {
+    await populateAlocarModal();
+    document.getElementById('a-maquina').value = id;
+  }, 100);
+}
+
+// ===== CONTROLE =====
+async function loadControle() {
+  const wrap = document.getElementById('controle-table');
+  wrap.innerHTML = `<div class="loading"><div class="spinner"></div> Carregando...</div>`;
+
+  try {
+    const alocacoes = await api('/alocacoes');
+
+    if (alocacoes.length === 0) {
+      wrap.innerHTML = `<div class="empty"><div class="empty-icon">📋</div><div class="empty-title">Nenhuma alocação ativa</div><div class="empty-sub">Aloque máquinas em obras</div></div>`;
+      return;
+    }
+
+    wrap.innerHTML = `
+      <table>
+        <thead>
+          <tr>
+            <th>Máquina</th>
+            <th>Categoria</th>
+            <th>Série / Placa</th>
+            <th>Obra</th>
+            <th>Local</th>
+            <th>Operador</th>
+            <th>Desde</th>
+            <th>Ações</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${alocacoes.map(a => `
+            <tr>
+              <td><strong>${a.icone || ''} ${a.maquina_nome}</strong></td>
+              <td class="td-muted">${a.categoria_nome || '—'}</td>
+              <td class="td-muted">${[a.numero_serie, a.placa].filter(Boolean).join(' / ') || '—'}</td>
+              <td>${a.obra_nome || '—'}</td>
+              <td class="td-muted">${a.obra_local || '—'}</td>
+              <td class="td-muted">${a.operador_nome || '—'}</td>
+              <td class="td-muted">${fmtDate(a.data_inicio)}</td>
+              <td>
+                <button class="btn btn-danger btn-sm" onclick="encerrarAlocacao(${a.id})">Encerrar</button>
+              </td>
+            </tr>`).join('')}
+        </tbody>
+      </table>`;
+  } catch (e) {}
+}
+
+async function encerrarAlocacao(id) {
+  if (!confirm('Encerrar esta alocação?')) return;
+  try {
+    await api(`/alocacoes/${id}/encerrar`, { method: 'PUT', body: {} });
+    toast('Alocação encerrada com sucesso!');
+    loadControle();
+  } catch (e) {}
+}
+
+// ===== PROBLEMAS =====
+let currentProblemaFilter = { status: '', prioridade: '' };
+
+async function loadProblemas() {
+  const list = document.getElementById('problemas-list');
+  list.innerHTML = `<div class="loading"><div class="spinner"></div> Carregando...</div>`;
+
+  try {
+    const params = new URLSearchParams();
+    if (currentProblemaFilter.status) params.set('status', currentProblemaFilter.status);
+    if (currentProblemaFilter.prioridade) params.set('prioridade', currentProblemaFilter.prioridade);
+
+    const problemas = await api('/problemas' + (params.toString() ? '?' + params : ''));
+
+    if (problemas.length === 0) {
+      list.innerHTML = `<div class="empty"><div class="empty-icon">✅</div><div class="empty-title">Nenhum problema encontrado</div></div>`;
+      return;
+    }
+
+    list.innerHTML = problemas.map(p => {
+      const iconMap = { critica: '🔴', alta: '🟠', media: '🟡', baixa: '⚪' };
+      const bgMap = { critica: 'var(--red-dim)', alta: 'var(--orange-dim)', media: 'var(--accent-dim)', baixa: 'var(--surface2)' };
+      return `
+        <div class="problem-card">
+          <div class="problem-icon" style="background:${bgMap[p.prioridade]}">${iconMap[p.prioridade] || '❓'}</div>
+          <div class="problem-content">
+            <div class="problem-title">${p.descricao}</div>
+            <div class="problem-meta">
+              <span>${p.icone || ''} <strong>${p.maquina_nome || '—'}</strong></span>
+              ${p.tipo ? `<span>🔧 ${p.tipo}</span>` : ''}
+              ${p.reportado_por ? `<span>👷 ${p.reportado_por}</span>` : ''}
+              <span>📅 ${fmtDate(p.criado_em)}</span>
+              ${prioridadeBadge(p.prioridade)}
+              ${p.status === 'resolvido'
+                ? `<span class="badge badge-green">✓ Resolvido em ${fmtDate(p.resolvido_em)}</span>`
+                : `<span class="badge badge-red">⏳ Pendente</span>`}
+            </div>
+            ${p.observacao_resolucao ? `<div style="margin-top:8px;font-size:12px;color:var(--text-muted);padding:8px;background:var(--surface2);border-radius:6px">✓ ${p.observacao_resolucao}</div>` : ''}
+          </div>
+          <div class="problem-actions">
+            ${p.status === 'pendente'
+              ? `<button class="btn btn-success btn-sm" onclick="abrirResolver(${p.id})">✓ Resolver</button>`
+              : ''}
+            <button class="btn btn-danger btn-sm" onclick="deleteProblema(${p.id})">🗑</button>
+          </div>
+        </div>`;
+    }).join('');
+
+  } catch (e) {}
+}
+
+function filterProblemas(status) {
+  currentProblemaFilter = { status, prioridade: '' };
+  document.querySelectorAll('[data-filter]').forEach(c => {
+    c.classList.toggle('active', c.dataset.filter === status);
+  });
+  loadProblemas();
+}
+
+function filterProblemasPrioridade(prioridade) {
+  currentProblemaFilter = { status: '', prioridade };
+  document.querySelectorAll('[data-filter]').forEach(c => {
+    c.classList.toggle('active', c.dataset.filter === prioridade);
+  });
+  loadProblemas();
+}
+
+function abrirResolver(id) {
+  state.resolvingId = id;
+  document.getElementById('r-obs').value = '';
+  openModal('modal-resolver');
+}
+
+async function confirmarResolver() {
+  const obs = document.getElementById('r-obs').value;
+  try {
+    await api(`/problemas/${state.resolvingId}/resolver`, { method: 'PUT', body: { observacao_resolucao: obs } });
+    toast('Problema marcado como resolvido!');
+    closeModal('modal-resolver');
+    loadProblemas();
+  } catch (e) {}
+}
+
+async function deleteProblema(id) {
+  if (!confirm('Excluir este problema?')) return;
+  try {
+    await api(`/problemas/${id}`, { method: 'DELETE' });
+    toast('Problema excluído');
+    loadProblemas();
+  } catch (e) {}
+}
+
+// ===== OPERADORES =====
+let editingOperadorId = null;
+
+async function loadOperadores() {
+  const wrap = document.getElementById('operadores-table');
+  try {
+    const ops = await api('/operadores');
+    state.operadores = ops;
+
+    if (ops.length === 0) {
+      wrap.innerHTML = `<div class="empty"><div class="empty-icon">👷</div><div class="empty-title">Nenhum operador cadastrado</div></div>`;
+      return;
+    }
+
+    wrap.innerHTML = `
+      <table>
+        <thead><tr><th>Nome</th><th>Telefone</th><th>Alocações Ativas</th><th>Ações</th></tr></thead>
+        <tbody>
+          ${ops.map(o => `<tr>
+            <td><strong>👷 ${o.nome}</strong></td>
+            <td class="td-muted">${o.telefone || '—'}</td>
+            <td><span class="badge ${o.alocacoes_ativas > 0 ? 'badge-accent' : 'badge-muted'}">${o.alocacoes_ativas} ativas</span></td>
+            <td>
+              <button class="btn btn-ghost btn-sm" onclick="editOperador(${o.id}, '${o.nome}', '${o.telefone || ''}')">✏️ Editar</button>
+              <button class="btn btn-danger btn-sm" onclick="deleteOperador(${o.id})">🗑</button>
+            </td>
+          </tr>`).join('')}
+        </tbody>
+      </table>`;
+  } catch (e) {}
+}
+
+function editOperador(id, nome, tel) {
+  editingOperadorId = id;
+  document.getElementById('op-nome').value = nome;
+  document.getElementById('op-tel').value = tel;
+  document.getElementById('modal-op-title').textContent = 'Editar Operador';
+  openModal('modal-operador');
+}
+
+async function saveOperador() {
+  const nome = document.getElementById('op-nome').value.trim();
+  const telefone = document.getElementById('op-tel').value.trim();
+  if (!nome) return toast('Nome é obrigatório', 'error');
+
+  try {
+    if (editingOperadorId) {
+      await api(`/operadores/${editingOperadorId}`, { method: 'PUT', body: { nome, telefone, ativo: true } });
+      toast('Operador atualizado!');
+    } else {
+      await api('/operadores', { method: 'POST', body: { nome, telefone } });
+      toast('Operador cadastrado!');
+    }
+    editingOperadorId = null;
+    closeModal('modal-operador');
+    loadOperadores();
+  } catch (e) {}
+}
+
+async function deleteOperador(id) {
+  if (!confirm('Remover este operador?')) return;
+  try {
+    await api(`/operadores/${id}`, { method: 'DELETE' });
+    toast('Operador removido');
+    loadOperadores();
+  } catch (e) {}
+}
+
+// ===== OBRAS =====
+let editingObraId = null;
+
+async function loadObras() {
+  const wrap = document.getElementById('obras-table');
+  try {
+    const obras = await api('/obras');
+    state.obras = obras;
+
+    if (obras.length === 0) {
+      wrap.innerHTML = `<div class="empty"><div class="empty-icon">🏗️</div><div class="empty-title">Nenhuma obra cadastrada</div></div>`;
+      return;
+    }
+
+    wrap.innerHTML = `
+      <table>
+        <thead><tr><th>Nome</th><th>Local</th><th>Máquinas Ativas</th><th>Status</th><th>Ações</th></tr></thead>
+        <tbody>
+          ${obras.map(o => `<tr>
+            <td><strong>🏗️ ${o.nome}</strong></td>
+            <td class="td-muted">${o.local || '—'}</td>
+            <td><span class="badge ${o.maquinas_ativas > 0 ? 'badge-accent' : 'badge-muted'}">${o.maquinas_ativas} máquinas</span></td>
+            <td>${o.ativa ? '<span class="badge badge-green">Ativa</span>' : '<span class="badge badge-muted">Encerrada</span>'}</td>
+            <td>
+              <button class="btn btn-ghost btn-sm" onclick="editObra(${o.id}, '${o.nome}', '${o.local || ''}')">✏️ Editar</button>
+              <button class="btn btn-danger btn-sm" onclick="deleteObra(${o.id})">🗑</button>
+            </td>
+          </tr>`).join('')}
+        </tbody>
+      </table>`;
+  } catch (e) {}
+}
+
+function editObra(id, nome, local) {
+  editingObraId = id;
+  document.getElementById('ob-nome').value = nome;
+  document.getElementById('ob-local').value = local;
+  document.getElementById('modal-obra-title').textContent = 'Editar Obra';
+  openModal('modal-obra');
+}
+
+async function saveObra() {
+  const nome = document.getElementById('ob-nome').value.trim();
+  const local = document.getElementById('ob-local').value.trim();
+  if (!nome) return toast('Nome é obrigatório', 'error');
+
+  try {
+    if (editingObraId) {
+      await api(`/obras/${editingObraId}`, { method: 'PUT', body: { nome, local, ativa: true } });
+      toast('Obra atualizada!');
+    } else {
+      await api('/obras', { method: 'POST', body: { nome, local } });
+      toast('Obra cadastrada!');
+    }
+    editingObraId = null;
+    closeModal('modal-obra');
+    loadObras();
+  } catch (e) {}
+}
+
+async function deleteObra(id) {
+  if (!confirm('Remover esta obra?')) return;
+  try {
+    await api(`/obras/${id}`, { method: 'DELETE' });
+    toast('Obra removida');
+    loadObras();
+  } catch (e) {}
+}
+
+// ===== MAQUINAS CRUD =====
+async function openNewMaquina() {
+  state.editingId = null;
+  document.getElementById('modal-maquina-title').textContent = 'Nova Máquina';
+  ['m-nome','m-serie','m-placa','m-local-compra','m-nota','m-obs'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('m-valor').value = '';
+  document.getElementById('m-combustivel').value = '';
+  document.getElementById('m-status-fin').value = 'ok';
+  document.getElementById('m-status').value = 'disponivel';
+  document.getElementById('m-operador').value = 'false';
+
+  if (state.categorias.length === 0) state.categorias = await api('/categorias');
+  document.getElementById('m-categoria').innerHTML = state.categorias.map(c =>
+    `<option value="${c.id}">${c.icone} ${c.nome}</option>`).join('');
+
+  openModal('modal-maquina');
+}
+
+async function openEditMaquina(id) {
+  const m = await api(`/maquinas/${id}`);
+  const maquina = m.maquina;
+  state.editingId = id;
+  document.getElementById('modal-maquina-title').textContent = 'Editar Máquina';
+
+  if (state.categorias.length === 0) state.categorias = await api('/categorias');
+  document.getElementById('m-categoria').innerHTML = state.categorias.map(c =>
+    `<option value="${c.id}" ${c.id == maquina.categoria_id ? 'selected' : ''}>${c.icone} ${c.nome}</option>`).join('');
+
+  document.getElementById('m-nome').value = maquina.nome || '';
+  document.getElementById('m-serie').value = maquina.numero_serie || '';
+  document.getElementById('m-placa').value = maquina.placa || '';
+  document.getElementById('m-local-compra').value = maquina.local_compra || '';
+  document.getElementById('m-nota').value = maquina.numero_nota || '';
+  document.getElementById('m-valor').value = maquina.valor_locacao || '';
+  document.getElementById('m-combustivel').value = maquina.combustivel || '';
+  document.getElementById('m-status-fin').value = maquina.status_financeiro || 'ok';
+  document.getElementById('m-status').value = maquina.status || 'disponivel';
+  document.getElementById('m-operador').value = maquina.tem_operador ? 'true' : 'false';
+  document.getElementById('m-obs').value = maquina.observacao || '';
+
+  openModal('modal-maquina');
+}
+
+async function saveMaquina() {
+  const body = {
+    categoria_id: document.getElementById('m-categoria').value,
+    nome: document.getElementById('m-nome').value.trim(),
+    numero_serie: document.getElementById('m-serie').value.trim(),
+    placa: document.getElementById('m-placa').value.trim(),
+    local_compra: document.getElementById('m-local-compra').value.trim(),
+    numero_nota: document.getElementById('m-nota').value.trim(),
+    valor_locacao: document.getElementById('m-valor').value || null,
+    combustivel: document.getElementById('m-combustivel').value,
+    status_financeiro: document.getElementById('m-status-fin').value,
+    status: document.getElementById('m-status').value,
+    tem_operador: document.getElementById('m-operador').value === 'true',
+    observacao: document.getElementById('m-obs').value.trim(),
+  };
+
+  if (!body.nome) return toast('Nome é obrigatório', 'error');
+
+  try {
+    if (state.editingId) {
+      await api(`/maquinas/${state.editingId}`, { method: 'PUT', body });
+      toast('Máquina atualizada!');
+    } else {
+      await api('/maquinas', { method: 'POST', body });
+      toast('Máquina cadastrada!');
+    }
+    closeModal('modal-maquina');
+    if (state.currentPage === 'frota') loadFrota();
+    else if (state.currentPage === 'dashboard') loadDashboard();
+  } catch (e) {}
+}
+
+// ===== ALOCAR =====
+async function populateAlocarModal() {
+  const [maquinas, obras, operadores] = await Promise.all([
+    api('/maquinas'),
+    api('/obras'),
+    api('/operadores')
+  ]);
+
+  document.getElementById('a-maquina').innerHTML = maquinas.map(m =>
+    `<option value="${m.id}">${m.categoria_icone || ''} ${m.nome} — ${m.status}</option>`).join('');
+
+  document.getElementById('a-obra').innerHTML = obras.filter(o => o.ativa).map(o =>
+    `<option value="${o.id}">${o.nome}</option>`).join('');
+
+  document.getElementById('a-operador').innerHTML =
+    `<option value="">Sem operador</option>` +
+    operadores.map(o => `<option value="${o.id}">${o.nome}</option>`).join('');
+
+  document.getElementById('a-data').value = new Date().toISOString().split('T')[0];
+}
+
+async function saveAlocacao() {
+  const body = {
+    maquina_id: document.getElementById('a-maquina').value,
+    obra_id: document.getElementById('a-obra').value,
+    operador_id: document.getElementById('a-operador').value || null,
+    data_inicio: document.getElementById('a-data').value,
+    observacao: document.getElementById('a-obs').value,
+  };
+
+  if (!body.maquina_id || !body.obra_id) return toast('Máquina e obra são obrigatórios', 'error');
+
+  try {
+    await api('/alocacoes', { method: 'POST', body });
+    toast('Máquina alocada com sucesso!');
+    closeModal('modal-alocar');
+    if (state.currentPage === 'controle') loadControle();
+    else if (state.currentPage === 'dashboard') loadDashboard();
+  } catch (e) {}
+}
+
+async function saveProblema() {
+  const body = {
+    maquina_id: document.getElementById('p-maquina').value,
+    descricao: document.getElementById('p-desc').value.trim(),
+    tipo: document.getElementById('p-tipo').value,
+    prioridade: document.getElementById('p-prioridade').value,
+    reportado_por: document.getElementById('p-reportado').value.trim(),
+  };
+
+  if (!body.maquina_id || !body.descricao) return toast('Máquina e descrição são obrigatórios', 'error');
+
+  try {
+    await api('/problemas', { method: 'POST', body });
+    toast('Problema reportado!');
+    closeModal('modal-problema');
+    if (state.currentPage === 'problemas') loadProblemas();
+    else loadDashboard();
+  } catch (e) {}
+}
+
+// ===== MODALS =====
+function openModal(id) {
+  document.getElementById(id).classList.add('open');
+  if (id === 'modal-alocar') populateAlocarModal();
+  if (id === 'modal-problema') populateProblemaModal();
+  if (id === 'modal-operador') {
+    if (!editingOperadorId) {
+      document.getElementById('op-nome').value = '';
+      document.getElementById('op-tel').value = '';
+      document.getElementById('modal-op-title').textContent = 'Novo Operador';
+    }
+  }
+  if (id === 'modal-obra') {
+    if (!editingObraId) {
+      document.getElementById('ob-nome').value = '';
+      document.getElementById('ob-local').value = '';
+      document.getElementById('modal-obra-title').textContent = 'Nova Obra';
+    }
+  }
+}
+
+async function populateProblemaModal() {
+  const maquinas = await api('/maquinas');
+  document.getElementById('p-maquina').innerHTML = maquinas.map(m =>
+    `<option value="${m.id}">${m.categoria_icone || ''} ${m.nome}</option>`).join('');
+  document.getElementById('p-desc').value = '';
+  document.getElementById('p-tipo').value = '';
+  document.getElementById('p-prioridade').value = 'media';
+  document.getElementById('p-reportado').value = '';
+}
+
+function closeModal(id) {
+  document.getElementById(id).classList.remove('open');
+  if (id === 'modal-operador') editingOperadorId = null;
+  if (id === 'modal-obra') editingObraId = null;
+}
+
+// Close on overlay click
+document.querySelectorAll('.modal-overlay').forEach(overlay => {
+  overlay.addEventListener('click', e => {
+    if (e.target === overlay) overlay.classList.remove('open');
+  });
+});
+
+// Global search
+let searchTimeout;
+function globalSearch(val) {
+  clearTimeout(searchTimeout);
+  if (!val.trim()) return;
+  searchTimeout = setTimeout(async () => {
+    nav('frota');
+    const wrap = document.getElementById('frota-table-wrap');
+    wrap.innerHTML = `<div class="loading"><div class="spinner"></div> Buscando...</div>`;
+    const maquinas = await api(`/maquinas?search=${encodeURIComponent(val)}`);
+    // reuse frota render
+    state.maquinas = maquinas;
+    document.getElementById('frota-count').textContent = `${maquinas.length} resultados para "${val}"`;
+    if (maquinas.length === 0) {
+      wrap.innerHTML = `<div class="empty"><div class="empty-icon">🔍</div><div class="empty-title">Nada encontrado</div></div>`;
+      return;
+    }
+    wrap.innerHTML = `<table><thead><tr><th>Máquina</th><th>Categoria</th><th>Série / Placa</th><th>Obra</th><th>Status</th></tr></thead><tbody>
+      ${maquinas.map(m => `<tr onclick="openMaquinaDetail(${m.id})">
+        <td><strong>${m.nome}</strong></td>
+        <td>${m.categoria_icone || ''} ${m.categoria_nome || '—'}</td>
+        <td class="td-muted">${[m.numero_serie, m.placa].filter(Boolean).join(' / ') || '—'}</td>
+        <td class="td-muted">${m.obra_nome || '—'}</td>
+        <td>${statusBadge(m.status)}</td>
+      </tr>`).join('')}
+    </tbody></table>`;
+  }, 300);
+}
+
+// ===== INIT =====
+document.addEventListener('DOMContentLoaded', () => {
+  nav('dashboard');
+});
+</script>
+</body>
+</html>
